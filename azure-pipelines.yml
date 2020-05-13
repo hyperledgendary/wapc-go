@@ -8,14 +8,31 @@ steps:
 - task: GoTool@0
   inputs:
     version: '1.13.5'
+
+- script: |
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(Pipeline.Workspace)/.bin/ v1.26.0
+    echo "##vso[task.prependpath]$(Pipeline.Workspace)/.bin/"
+  displayName: Install linter
 - task: Go@0
+  displayName: GoGet
   inputs:
     command: 'get'
     arguments: '-d'
     workingDirectory: '$(System.DefaultWorkingDirectory)'
+- script: |
+    golangci-lint run --modules-download-mode=readonly -E goimports -v ./...
+  workingDirectory: '$(System.DefaultWorkingDirectory)'
+  displayName: Lint
 - task: Go@0
+  displayName: GoBuild
   inputs:
     command: 'build'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+- task: Go@0
+  displayName: GoTest
+  inputs:
+    command: 'test'
+    arguments: '-v'
     workingDirectory: '$(System.DefaultWorkingDirectory)'
 - task: CopyFiles@2
   inputs:
